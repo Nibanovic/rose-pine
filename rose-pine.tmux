@@ -70,7 +70,7 @@ main() {
 
         thm_base="#faf4ed";
         thm_surface="#fffaf3";
-        thm_overlay="#f2e9e1";
+        thm_overlay="#f2e9e1";·
         thm_muted="#9893a5";
         thm_subtle="#797593";
         thm_text="#575279";
@@ -109,10 +109,10 @@ main() {
 
     # Status bar
     set "status" "on"
-    set status-style "fg=$thm_pine,bg=$thm_base"
+    set status-style "fg=$thm_base,bg=$thm_base"
     # set monitor-activity "on"
     # Leave justify option to user
-    # set status-justify "left"
+    set status-justify "centre"
     set status-left-length "300"
     set status-right-length "200"
 
@@ -142,7 +142,12 @@ main() {
     # Shows hostname of the computer the tmux session is run on
     local host
     host="$(get_tmux_option "@rose_pine_host" "")"
-   
+
+    # Shows current tmux session name
+    local session
+    session="$(get_tmux_option "@rose_pine_session" "")"
+
+
     # Settings that allow user to choose their own icons and status bar behaviour
     # START
     
@@ -157,7 +162,7 @@ main() {
 
     # Changes the icon / character that goes between each window's name in the bar
     local window_status_separator
-    window_status_separator="$(get_tmux_option "@rose_pine_window_status_separator" "  ")"
+    window_status_separator="$(get_tmux_option "@rose_pine_window_status_separator" " ")"
     setw window-status-separator "$window_status_separator"
     
     local right_separator
@@ -181,24 +186,15 @@ main() {
     # I know, stupid, right? For some reason, spaces aren't consistent
 
     # These variables are the defaults so that the setw and set calls are easier to parse
-
-    local show_window
-    readonly show_window=" #[fg=$thm_subtle]$current_window_icon #[fg=$thm_rose]#W$spacer"
-
-    local show_window_in_window_status
-    show_window_in_window_status="#[fg=$thm_iris]#I#[fg=$thm_iris,]$left_separator#[fg=$thm_iris]#W"
-
-    local show_window_in_window_status_current
-    show_window_in_window_status_current="#I#[fg=$thm_gold,bg=""]$left_separator#[fg=$thm_gold,bg=""]#W"
-
+    
     local show_session
-    readonly show_session=" #[fg=$thm_text]$current_session_icon #[fg=$thm_text]#S "
+    readonly show_session=" #[fg=$thm_muted]$current_session_icon #[fg=$thm_muted]#S "
 
     local show_user
-    readonly show_user="#[fg=$thm_iris]#(whoami)#[fg=$thm_subtle]$right_separator#[fg=$thm_subtle]$username_icon"
+    readonly show_user="#[fg=$thm_muted]#(whoami)#[fg=$thm_subtle]$right_separator#[fg=$thm_muted]$username_icon$spacer"
 
     local show_host
-    readonly show_host="$spacer#[fg=$thm_text]#H#[fg=$thm_subtle]$right_separator#[fg=$thm_subtle]$hostname_icon"
+    readonly show_host="#[fg=$thm_muted]#H#[fg=$thm_subtle]$right_separator#[fg=$thm_muted]$hostname_icon"
 
 
     # ######### ASSEMBLY #############
@@ -207,36 +203,44 @@ main() {
     sep="█"
     cap_left=""
     cap_right=""
-    name_number_separator=""
-    local window_status_current_format="#[fg=$thm_overlay,bg=$thm_base]$cap_left#[fg=$thm_gold,bg=$thm_overlay]#I$name_number_separator#[fg=$thm_gold,bg=$thm_overlay]#W#[fg=$thm_overlay,bg=$thm_base]$cap_right"
+    name_number_separator="·"
 
+    local active_win_fg active_win_bg inactive_win_fg
+    active_win_fg=$thm_base
+    active_win_bg=$thm_pine
+    inactive_win_fg=$thm_pine
 
-    local window_status_format=$show_window
+    local window_status_current_format="#[fg=$active_win_bg,bg=$thm_base]$cap_left#[fg=$active_win_fg,bg=$active_win_bg]#I$name_number_separator#[fg=$active_win_fg,bg=$active_win_bg]#W#[fg=$active_win_bg,bg=$thm_base]$cap_right"
+
+    local window_status_format=" #[fg=$inactive_win_fg]#I$name_number_separator#[fg=$inactive_win_fg]#W "
+
     setw window-status-format "$window_status_format"
     setw window-status-current-format "$window_status_current_format"
 
     ## LEFT COLUMN
+    local hollow_cap_left=""
     local left_column
-    left_column=$show_session
+
+    if [[ "$session" == "on" ]]; then
+        left_column="$show_session#[fg=$thm_muted]$hollow_cap_left"
+    fi
+    # We set the section
+    set status-left "$left_column"
+
+
 
     ## RIGHT COLUMN
+    local hollow_cap_right=""
     local right_column
     if [[ "$user" == "on" ]]; then
-        right_column=$right_column$show_user
+        right_column="$right_column$show_user"
     fi
 
     if [[ "$host" == "on" ]]; then
         right_column=$right_column$show_host
     fi
-
-
-
-    # We set the sections
-    set status-left "$left_column"
-    set status-right "$right_column"
-
-
-
+    # We set the section
+    set status-right "#[fg=$thm_muted]$hollow_cap_right $right_column"
 
 
     # ######### WINDOW PRIORITIZATION #############
@@ -254,13 +258,13 @@ main() {
     # user_window_count="$(get_tmux_option "@rose_pine_window_count" "")"
 
 
-    # Variable logic for the window prioritization
     # local current_window_count
     # local current_window_width
 
     # current_window_count=$(tmux list-windows | wc -l)
     # current_window_width=$(tmux display -p "#{window_width}")
 
+    # Variable logic for the window prioritization
     # NOTE: Can possibly integrate the $only_windows mode into this
     # if [[ "$prioritize_windows" == "on" ]]; then
         # if [[ "$current_window_count" -gt "$user_window_count" || "$current_window_width" -lt "$user_window_width" ]]; then
